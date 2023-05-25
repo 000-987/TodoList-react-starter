@@ -1,7 +1,7 @@
 import { Footer, Header, TodoCollection, TodoInput } from 'components';
 import { useState } from 'react';
 import { useEffect } from 'react';
-import { getTodos, createTodo } from 'api/todos';
+import { getTodos, createTodo, patchTodo, deleteTodo } from 'api/todos';
 
 const TodoPage = () => {
   const [inputValue, setInputValue] = useState('');
@@ -18,70 +18,81 @@ const TodoPage = () => {
       return;
     }
 
-try {
-  const data = await createTodo({
-    title: inputValue,
-    isDone: false,
-  });
+    try {
+      const data = await createTodo({
+        title: inputValue,
+        isDone: false,
+      });
 
-  setTodos((prevTodos) => {
-    return [
-      ...prevTodos,
-      {
-        id: data.id,
-        title: data.title,
-        isDone: data.isDone,
-        isEdit: false,
-      },
-    ];
-  });
+      setTodos((prevTodos) => {
+        return [
+          ...prevTodos,
+          {
+            id: data.id,
+            title: data.title,
+            isDone: data.isDone,
+            isEdit: false,
+          },
+        ];
+      });
 
-  setInputValue('');
-} catch (error) {
-  console.error(error);
-}
+      setInputValue('');
+    } catch (error) {
+      console.error(error);
+    }
   };
   const handleKeyDown = async () => {
     if (inputValue.length === 0) {
       return;
     }
 
-try {
-  const data = await createTodo({
-    title: inputValue,
-    isDone: false,
-  });
+    try {
+      const data = await createTodo({
+        title: inputValue,
+        isDone: false,
+      });
 
-  setTodos((prevTodos) => {
-    return [
-      ...prevTodos,
-      {
-        id: data.id,
-        title: data.title,
-        isDone: data.isDone,
-        isEdit: false,
-      },
-    ];
-  });
+      setTodos((prevTodos) => {
+        return [
+          ...prevTodos,
+          {
+            id: data.id,
+            title: data.title,
+            isDone: data.isDone,
+            isEdit: false,
+          },
+        ];
+      });
 
-  setInputValue('');
-} catch (error) {
-  console.error(error);
-}
+      setInputValue('');
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleToggleDone = (id) => {
-    setTodos((prevTodos) => {
-      return prevTodos.map((todo) => {
-        if (todo.id === id) {
-          return {
-            ...todo,
-            isDone: !todo.isDone,
-          };
-        }
-        return todo;
+  const handleToggleDone = async (id) => {
+    const currentTodo = todos.find((todo) => todo.id === id);
+
+    try {
+      await patchTodo({
+        id,
+        isDone: !currentTodo.isDone,
       });
-    });
+
+      setTodos((prevTodos) => {
+        return prevTodos.map((todo) => {
+          if (todo.id === id) {
+            return {
+              ...todo,
+              isDone: !todo.isDone,
+            };
+          }
+          return todo;
+        });
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
   const handleChangeMode = ({ id, isEdit }) => {
     setTodos((prevTodos) => {
@@ -97,24 +108,31 @@ try {
       });
     });
   };
-  const handleSave = ({ id, title }) => {
-    setTodos((prevTodos) => {
-      return prevTodos.map((todo) => {
-        if (todo.id === id) {
-          return {
-            ...todo,
-            id,
-            title,
-            isEdit: false,
-          };
-        }
-
-        return todo;
+const handleSave = async ({ id, title }) => {
+    try {
+      await patchTodo({
+        id,
+        title,
       });
-    });
+      setTodos((prevTodos) => {
+        return prevTodos.map((todo) => {
+          if (todo.id === id) {
+            return { ...todo, title, isEdit: false };
+          }
+          return todo;
+        });
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
-  const handleDelete = (id) => {
-    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteTodo(id);
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   useEffect(() => {
@@ -147,7 +165,7 @@ try {
         onChangeMode={handleChangeMode}
         onDelete={handleDelete}
       />
-      <Footer numOfTodos={todoNums}/>
+      <Footer numOfTodos={todoNums} />
     </div>
   );
 };
