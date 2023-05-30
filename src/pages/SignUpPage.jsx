@@ -56,7 +56,7 @@ const { register, isAuthenticated } = useAuth();
 
 useEffect(() => {
   if (isAuthenticated) {
-    navigate('/todos');
+    navigate('/todo');
   }
 }, [navigate, isAuthenticated]);
 
